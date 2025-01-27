@@ -1,0 +1,149 @@
+.home {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @media (width > 991px) {
+    flex-direction: row;
+  }
+
+  .home-item {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    &:hover {
+      video {
+        transform: scale(1.2);
+      }
+    }
+
+    &:after {
+      position: absolute;
+      content: '';
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      left: 0;
+      top: 0;
+      opacity: 0.7;
+      z-index: 1;
+    }
+
+    video {
+      height: 100%;
+      transform: scale(1);
+      position: relative;
+      transition: transform 0.3s ease-in-out;
+      width: 100vw;
+      object-fit: cover;
+
+      @media (width > 991px) {
+        width: unset;
+      }
+    }
+
+    h1 {
+      position: absolute;
+      z-index: 2;
+      color: #fff;
+      font-size: 2.1rem;
+      text-align: center;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      transform: translate(-50%, -50%);
+      padding-inline: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+
+      @media (width > 991px) {
+        font-size: 2.5rem;
+      }
+
+      span {
+        font-size: 1.8rem;
+        color: #fff;
+        display: block;
+      }
+    }
+  }
+
+  .is-disabled {
+    pointer-events: none;
+
+    &:after {
+      opacity: 0.9;
+    }
+
+    h2 {
+      color: #dc5151;
+      font-weight: 700;
+      position: absolute;
+      z-index: 2;
+      width: 100%;
+
+      text-align: right;
+      bottom: 5px;
+      right: 5px;
+
+      @media (height > 600px) {
+        bottom: 10px;
+        text-align: center;
+      }
+    }
+  }
+
+  .wuwa {
+    @media (width > 991px) {
+      video {
+        left: -94px;
+      }
+    }
+
+    h1 {
+      color: #c5b9b9;
+    }
+  }
+
+  .hsr {
+    @media (width > 991px) {
+      video {
+        left: -131px;
+      }
+    }
+
+    h1 {
+      color: #6fc9ef;
+    }
+  }
+
+  .zzz {
+    @media (width > 991px) {
+      video {
+        left: -220px;
+      }
+    }
+
+    h1 {
+      color: #cde72a;
+    }
+  }
+
+  .genshin {
+    @media (width > 991px) {
+      video {
+        left: 184px;
+      }
+    }
+
+    h1 {
+      color: #efd892;
+    }
+  }
+}

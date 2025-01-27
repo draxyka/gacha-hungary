@@ -1,0 +1,80 @@
+.core {
+  height: 100%;
+  padding-block: 50px;
+
+  h1 {
+    font-size: 3rem;
+    text-transform: uppercase;
+    font-weight: 300;
+    margin-bottom: 50px;
+    letter-spacing: 0.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+
+    @media (width > 1199px) {
+      margin-bottom: 50px;
+      text-align: left;
+    }
+  }
+
+  .wrapper {
+    height: 100%;
+  }
+
+  .core-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    height: 100%;
+    gap: 30px;
+
+    @media (width > 1199px) {
+      grid-template-columns: 400px 1fr;
+    }
+  }
+
+  .card {
+    background-color: black;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    color: #d6e8f7;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding-bottom: 30px;
+    font-size: 2rem;
+
+    span {
+      padding-inline: 10px;
+    }
+  }
+
+  .card.news {
+    background-color: #d6e8f7;
+    height: 100%;
+  }
+
+  .core-sub {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 30px;
+  }
+
+  .core-main {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.core.wuwa {
+  background: url('/assets/images/wuwa-bg.jpg') no-repeat center;
+  background-size: cover;
+
+  h1 {
+    color: #fff;
+  }
+
+  .card.news {
+    color: #ddbf61;
+  }
+}

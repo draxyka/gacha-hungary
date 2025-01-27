@@ -1,0 +1,31 @@
+.news {
+  background: url('/assets/images/wuwa-bg.jpg') no-repeat center;
+  background-size: cover;
+  min-height: 100vh;
+  padding-block: 50px;
+
+  h1 {
+    text-align: center;
+    color: #fff;
+    font-size: 3.5rem;
+  }
+
+  .news-card-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    padding-block: 30px;
+    margin-inline: 30px;
+
+    h2 {
+      color: #fff;
+      font-size: 2rem;
+      margin-block: 10px;
+      text-transform: uppercase;
+    }
+
+    a {
+      color: #fff;
+    }
+  }
+}
