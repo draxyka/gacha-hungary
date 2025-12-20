@@ -1,0 +1,23 @@
+@layer social-media, theme, utilities;
+
+@layer social-media {
+  .social-media {
+    @apply text-center text-white py-2.5;
+
+    h1 {
+      @apply text-4xl mb-3;
+    }
+
+    h2 {
+      @apply text-3xl my-6;
+    }
+
+    ul {
+      @apply grid list-none gap-4;
+      grid-template-columns: repeat(auto-fit, minmax(min(275px, 100%), 1fr));
+    }
+  }
+}
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);

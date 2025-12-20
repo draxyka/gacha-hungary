@@ -1,0 +1,30 @@
+@layer youtube, theme, utilities;
+
+@layer youtube {
+  .youtube {
+    @apply flex flex-col items-center text-center;
+
+    .card-image {
+      @apply rounded-full border-4 border-red-500 shadow-md w-24 h-24 object-cover;
+    }
+
+    .card-title {
+      @apply mt-4 font-semibold text-gray-900 dark:text-white uppercase;
+    }
+
+    .card-button {
+      @apply mt-2 bg-red-500  text-white px-4 py-2 rounded-lg text-sm font-medium transition;
+    }
+
+    .card-loading {
+      @apply text-center text-gray-500;
+    }
+
+    a {
+      @apply no-underline;
+    }
+  }
+}
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
