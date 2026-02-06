@@ -2,7 +2,11 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['yt3.ggpht.com', 'static-cdn.jtvnw.net', 'pbs.twimg.com'],
+    remotePatterns: [
+      { hostname: 'yt3.ggpht.com' },
+      { hostname: 'static-cdn.jtvnw.net' },
+      { hostname: 'pbs.twimg.com' },
+    ],
   },
 };
 

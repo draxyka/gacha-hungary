@@ -1,14 +1,6 @@
-import Core from '@/core/core';
-import { CoreProps } from '@/core/types/core.types';
-import { get } from '@/utils/req.service';
+import Game from '@/features/game/Game';
 
-export default async function GamePage({
-  params,
-}: Readonly<{
-  params: { slug: 'wuthering-waves' | 'honkai-star-rail' | 'zenless-zone-zero' | 'genshin-impact' };
-}>) {
+export default async function GamePage({ params }: { params: { slug: string } }) {
   const { slug } = await params;
-  const gameData: CoreProps = await get(slug);
-
-  return <Core gameType={slug} initialGameData={gameData} />;
+  return <Game slug={slug} />;
 }
