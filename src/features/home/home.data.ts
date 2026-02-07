@@ -21,7 +21,7 @@ export const HOME_ITEMS: HomeItem[] = [
     slug: 'zenless-zone-zero',
     title: 'Zenless Zone Zero',
     videoUrl:
-      'https://fastcdn.hoyoverse.com/mi18n/nap_global/m20241118hy7aovj94w/upload/2824d9b5bbe2a96da831fea5281529fe_7779703647790743076.mp4',
+      'https://act-webstatic.hoyoverse.com/puzzle/zzz/pz_HDTOMelvek/resource/puzzle/2026/01/27/d38e6087f26231054b0593761d002b66_6560558654465457543.mp4',
     videoPoster: 'https://act.hoyoverse.com/zzz/event/e20241218-landing-qeflv5/images/kv.282a4cda..jpg',
     description: 'Magyarország',
   },
