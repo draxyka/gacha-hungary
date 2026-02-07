@@ -12,6 +12,7 @@ export default function Twitch({ channel }: { channel: string }) {
         <iframe
           src={`https://player.twitch.tv/?channel=${channel}&parent=${parent}`}
           allowFullScreen
+          loading="lazy"
           className="w-full h-full"
           title={`${channel} Twitch stream`}
         />

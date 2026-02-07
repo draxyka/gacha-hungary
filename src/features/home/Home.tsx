@@ -1,14 +1,8 @@
 import Link from 'next/link';
-import { HOME_ITEMS } from './home.mock';
+import { HOME_ITEMS } from './home.data';
+import { GAME_COLORS } from '@/constants/games';
 
 const ENABLED_SLUGS = ['wuthering-waves'];
-
-const TITLE_COLORS: Record<string, string> = {
-  'wuthering-waves': 'text-gray-400',
-  'honkai-star-rail': 'text-sky-300',
-  'zenless-zone-zero': 'text-lime-400',
-  'genshin-impact': 'text-amber-400',
-};
 
 const VIDEO_OFFSETS: Record<string, string> = {
   'wuthering-waves': 'lg:left-[-120px]',
@@ -19,10 +13,19 @@ const VIDEO_OFFSETS: Record<string, string> = {
 
 export default function Home() {
   return (
-    <div className="flex flex-col overflow-hidden w-full flex-1 lg:flex-row">
+    <div className="relative flex flex-col overflow-hidden w-full h-screen lg:flex-row">
+      {/* Oldal azonosító */}
+      <div className="absolute top-0 left-0 right-0 z-20 text-center py-6 pointer-events-none">
+        <h2 className="text-lg lg:text-xl font-bold uppercase tracking-[0.35em] text-white" style={{ textShadow: '0 2px 16px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.9)' }}>
+          Gacha Hungary
+        </h2>
+        <p className="text-xs uppercase tracking-[0.25em] text-white/60 mt-2" style={{ textShadow: '0 2px 8px rgba(0,0,0,1)' }}>
+          Magyar gacha közösség
+        </p>
+      </div>
       {HOME_ITEMS.map((item) => {
         const isEnabled = ENABLED_SLUGS.includes(item.slug);
-        const titleColor = TITLE_COLORS[item.slug] ?? 'text-white';
+        const titleColor = GAME_COLORS[item.slug] ?? 'text-white';
         const videoOffset = VIDEO_OFFSETS[item.slug] ?? '';
 
         return (
@@ -37,17 +40,19 @@ export default function Home() {
               autoPlay
               muted
               loop
+              playsInline
+              preload="metadata"
               className={`h-full w-[100vw] relative transition-transform duration-300 ease-in-out object-cover scale-100 group-hover:scale-[1.2] ${videoOffset}`}
             />
             <h1
               className={`absolute z-[2] text-center top-1/2 left-1/2 w-full -translate-x-1/2 -translate-y-1/2 text-2xl font-bold uppercase lg:text-4xl ${titleColor}`}
             >
-              {item.title} <span className="text-white block text-2xl">{item.description}</span>
+              {item.title}
             </h1>
             {!isEnabled && (
-              <h2 className="text-red-400 font-bold absolute z-10 w-full sm:bottom-5 bottom-3 text-center">
-                Fejlesztés alatt!
-              </h2>
+              <span className="absolute z-10 bottom-4 left-1/2 -translate-x-1/2 text-xs uppercase tracking-[0.2em] text-white/40 bg-white/5 border border-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full">
+                Hamarosan
+              </span>
             )}
           </Link>
         );

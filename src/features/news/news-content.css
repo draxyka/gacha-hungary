@@ -1,0 +1,85 @@
+.news-content {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.125rem;
+  line-height: 1.75;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin-bottom: 1rem;
+  }
+
+  a {
+    color: rgb(147, 197, 253);
+    text-decoration: underline;
+    transition: color 0.2s;
+
+    &:hover {
+      color: white;
+    }
+  }
+
+  ol,
+  ul {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  li {
+    margin-bottom: 0.25rem;
+  }
+
+  img {
+    border-radius: 0.75rem;
+    margin: 1.5rem auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  strong {
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Override dark inline colors from WP content — unreadable on dark bg */
+  [style*="color: rgb(31, 31, 31)"],
+  [style*="color: rgb(0, 0, 0)"],
+  [style*="color: rgb(51, 51, 51)"],
+  [style*="color: rgb(34, 34, 34)"],
+  [style*="color: rgb(68, 68, 68)"],
+  [style*="color:#1f1f1f"],
+  [style*="color:#000"],
+  [style*="color: black"] {
+    color: inherit !important;
+  }
+
+  blockquote {
+    border-left: 3px solid rgba(255, 255, 255, 0.2);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.6);
+  }
+}

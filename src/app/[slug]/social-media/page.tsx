@@ -1,6 +1,11 @@
 import SocialMedia from '@/features/social-media/SocialMedia';
+import type { Metadata } from 'next';
 
-export default async function SocialMediaPage({ params }: { params: { slug: string } }) {
-  const { slug } = await params;
-  return <SocialMedia slug={slug} />;
+export const metadata: Metadata = {
+  title: 'Social Media',
+  description: 'Magyar gacha játék közösségi média — Twitch streamerek és YouTube csatornák.',
+};
+
+export default function SocialMediaPage() {
+  return <SocialMedia />;
 }

@@ -1,0 +1,57 @@
+.character-content {
+  p {
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  strong {
+    color: white;
+    font-weight: 600;
+  }
+
+  u {
+    text-decoration-color: rgba(255, 255, 255, 0.3);
+  }
+
+  ul,
+  ol {
+    padding-left: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  li {
+    margin-bottom: 0.25rem;
+  }
+
+  a {
+    color: rgb(147, 197, 253);
+    text-decoration: underline;
+
+    &:hover {
+      color: white;
+    }
+  }
+}

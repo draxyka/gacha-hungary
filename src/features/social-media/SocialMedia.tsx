@@ -1,10 +1,14 @@
+'use client';
+
 import { CHANNELS_DATA } from './social-media.mock';
 import { ChannelType } from './types/social-media.types';
 import Twitch from './components/Twitch';
 import Youtube from './components/Youtube';
+import { useGame } from '@/context/GameContext';
 
-
-export default function SocialMedia({ slug }: { slug: string }) {
+export default function SocialMedia() {
+  const game = useGame();
+  const slug = game?.slug ?? '';
   const channels = CHANNELS_DATA[slug] ?? [];
   const twitchChannels = channels.filter((ch) => ch.type === ChannelType.Twitch);
   const youtubeChannels = channels.filter((ch) => ch.type === ChannelType.Youtube);

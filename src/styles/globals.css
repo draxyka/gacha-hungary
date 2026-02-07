@@ -1,6 +1,5 @@
 @layer reset, base, theme, utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap');
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
@@ -21,7 +20,6 @@
   html,
   main {
     overflow-x: hidden;
-    height: 100%;
   }
 
   html {
@@ -37,7 +35,7 @@
 
 @layer base {
   html {
-    font-family: 'Roboto Condensed', serif;
+    font-family: var(--font-roboto-condensed, 'Roboto Condensed', sans-serif);
     color: #000;
     font-size: 1rem;
     -webkit-text-size-adjust: 100%;
@@ -46,8 +44,20 @@
   }
 
   .wrapper {
-    width: 1660px;
+    width: 1400px;
     margin: 0 auto;
     max-width: calc(100% - 30px);
+  }
+}
+
+/* ─── Accessibility: prefers-reduced-motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

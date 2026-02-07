@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "next dev",
+    "start": "next start",
     "dev": "next dev",
     "build": "next build",
-    "lint": "next lint"
+    "lint": "next lint",
+    "translate": "tsx scripts/translate-news.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
@@ -23,8 +24,10 @@
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
