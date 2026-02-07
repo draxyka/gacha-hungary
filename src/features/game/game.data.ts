@@ -27,7 +27,7 @@ export const GAME_DATA: Record<string, GameProps> = {
       {
         name: 'LORE',
         slug: 'lore',
-        imgUrl: 'card_brant.webp',
+        imgUrl: 'card_luuk.webp',
         description: 'A Solaris-3 világa — történet, frakciók és Echok.',
       },
       {
@@ -45,7 +45,7 @@ export const GAME_DATA: Record<string, GameProps> = {
       {
         name: 'INTERAKTÍV TÉRKÉP',
         outerLink: 'https://wuthering.gg/map',
-        imgUrl: 'card_luuk.webp',
+        imgUrl: 'card_brant.webp',
         description: 'Fedezd fel Solaris-3 minden szegletét interaktívan.',
       },
     ],
