@@ -4,13 +4,6 @@ import { GAME_COLORS } from '@/constants/games';
 
 const ENABLED_SLUGS = ['wuthering-waves'];
 
-const VIDEO_OFFSETS: Record<string, string> = {
-  'wuthering-waves': 'lg:left-[-120px]',
-  'honkai-star-rail': 'lg:left-[-131px]',
-  'zenless-zone-zero': 'lg:left-[-265px]',
-  'genshin-impact': 'lg:left-[184px]',
-};
-
 export default function Home() {
   return (
     <div className="relative flex flex-col overflow-hidden w-full h-screen lg:flex-row">
@@ -26,8 +19,6 @@ export default function Home() {
       {HOME_ITEMS.map((item) => {
         const isEnabled = ENABLED_SLUGS.includes(item.slug);
         const titleColor = GAME_COLORS[item.slug] ?? 'text-white';
-        const videoOffset = VIDEO_OFFSETS[item.slug] ?? '';
-
         return (
           <Link
             key={item.slug}
@@ -42,10 +33,10 @@ export default function Home() {
               loop
               playsInline
               preload="metadata"
-              className={`h-full w-[100vw] relative transition-transform duration-300 ease-in-out object-cover scale-100 group-hover:scale-[1.2] ${videoOffset}`}
+              className="h-full w-full relative transition-transform duration-300 ease-in-out object-cover scale-100 group-hover:scale-[1.2]"
             />
             <h1
-              className={`absolute z-[2] text-center top-1/2 left-1/2 w-full -translate-x-1/2 -translate-y-1/2 text-2xl font-bold uppercase lg:text-4xl ${titleColor}`}
+              className={`absolute z-2 text-center top-1/2 left-1/2 w-full -translate-x-1/2 -translate-y-1/2 text-2xl font-bold uppercase lg:text-4xl ${titleColor}`}
             >
               {item.title}
             </h1>

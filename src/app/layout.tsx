@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import type { Metadata, Viewport } from 'next';
 import { Roboto_Condensed } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 
 const robotoCondensed = Roboto_Condensed({
   subsets: ['latin', 'latin-ext'],
@@ -60,6 +61,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1 flex flex-col">{children}</main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
