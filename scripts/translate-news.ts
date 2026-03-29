@@ -136,6 +136,8 @@ const DO_NOT_TRANSLATE: string[] = [
   // Game title & official event phrasing
   'Wuthering Waves',
   'Battle Rush',
+  'Resolution to Illuminate the Shadows',
+  'For You Who Walk in Snow',
   'Tides of Remembrance',
   'Depths of Illusive Realm',
   'Illusive Realm',

@@ -8,6 +8,18 @@ const NEWS_API: Record<string, string> = {
   // TODO: 'genshin-impact': '...',
 };
 
+/** Slugs to hide (spam / off-topic posts still returned by the upstream WP feed). */
+const BLOCKED_NEWS_SLUGS: Record<string, ReadonlySet<string>> = {
+  'wuthering-waves': new Set([
+    'does-the-martingale-strategy-really-work-a-statistical-analysis',
+    'gamezone-rebate-framework-strategic-cashback-integration-for-pacquiao-themed-bingo-and-color-game',
+  ]),
+};
+
+function isNewsSlugBlocked(gameSlug: string, postSlug: string): boolean {
+  return BLOCKED_NEWS_SLUGS[gameSlug]?.has(postSlug) ?? false;
+}
+
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&hellip;/g, '...').replace(/&#8217;/g, "'").replace(/&#8220;/g, '"').replace(/&#8221;/g, '"').replace(/&#038;/g, '&').replace(/&nbsp;/g, ' ').trim();
 }
@@ -75,7 +87,9 @@ export async function fetchNewsList(
     ]);
     if (!res.ok) return [];
     const posts: WpPost[] = await res.json();
-    return posts.map((p) => mapPost(p, translations));
+    return posts
+      .filter((p) => !isNewsSlugBlocked(gameSlug, p.slug))
+      .map((p) => mapPost(p, translations));
   } catch {
     return [];
   }
@@ -99,7 +113,9 @@ export async function fetchNewsBySlug(
     if (!res.ok) return null;
     const posts: WpPost[] = await res.json();
     if (posts.length === 0) return null;
-    return mapPost(posts[0], translations);
+    const post = posts[0];
+    if (isNewsSlugBlocked(gameSlug, post.slug)) return null;
+    return mapPost(post, translations);
   } catch {
     return null;
   }
