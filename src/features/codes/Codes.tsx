@@ -45,7 +45,7 @@ export default function Codes() {
           Kódok
         </h1>
         <p className="text-center text-white/40 text-sm mb-12 max-w-lg mx-auto">
-          Copy the code and redeem it in-game: Settings → Other → Redemption Code
+          Másold ki a kódot és használd fel a játékban: Settings → Other → Redemption Code
         </p>
 
         {codes.length === 0 && (

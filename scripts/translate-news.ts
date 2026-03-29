@@ -127,14 +127,23 @@ async function deeplTranslateBatch(
 }
 
 // ─── Glossary — words that should NOT be translated ──────────
-// These terms are wrapped in <var> tags before sending to DeepL
+// These terms are wrapped in <span> tags before sending to DeepL
 // so they stay untouched. Works with tag_handling: 'html'.
+//
+// Sorted longest-first at runtime so multi-word phrases match
+// before their individual words (e.g. "Resonance Skill" before "Skill").
 const DO_NOT_TRANSLATE: string[] = [
-  // Game title & official event phrasing (DeepL must not paraphrase)
+  // Game title & official event phrasing
   'Wuthering Waves',
   'Battle Rush',
+  'Tides of Remembrance',
+  'Depths of Illusive Realm',
+  'Illusive Realm',
+  'Simulation Training',
+  'First Resonance',
+  'Action',
 
-  // Resources & items
+  // ── Resources & items ────────────────────────────────────────
   'Astrite',
   'Shell Credit',
   'Resonance Potion',
@@ -144,8 +153,13 @@ const DO_NOT_TRANSLATE: string[] = [
   'Lustrous Tide',
   'Radiant Tide',
   'Forging Tide',
+  'Waveband',
+  'Waveworn Resident',           // exploration collectible
+  'Sealed Tube',
+  'Premium Resonance Potion',
+  'Crystal Solvent',
 
-  // Elements
+  // ── Elements ─────────────────────────────────────────────────
   'Glacio',
   'Fusion',
   'Electro',
@@ -153,30 +167,46 @@ const DO_NOT_TRANSLATE: string[] = [
   'Spectro',
   'Havoc',
 
-  // Weapon types
+  // ── Weapon types ─────────────────────────────────────────────
   'Broadblade',
   'Sword',
   'Pistols',
   'Gauntlets',
   'Rectifier',
 
-  // Game mechanics
+  // ── Core game mechanics ──────────────────────────────────────
   'Resonator',
   'Resonance Skill',
   'Resonance Liberation',
-  'Forte Circuit',
-  'Intro Skill',
-  'Outro Skill',
-  'Echo',
-  'Sonata',
-  'Tacet Discord',
-  'Tacet Field',
-  'Concerto Energy',
+  'Resonance Chain',
+  'Resonance Bonus',
   'Resonance Energy',
+  'Concerto Energy',
+  'Forte Circuit',
   'Forte Gauge',
   'Forte',
-  'Rover',
+  'Intro Skill',
+  'Outro Skill',
+  'Inherent Skill',
+  'Echo',
+  'Sonata',
+  'Sonata Effect',
+  'Tacet Discord',
+  'Tacet Field',
+  'Tacet Core',
+  'Data Bank',
+  'Union Level',
   'Convene',
+  'Overdash',
+  'Parry',
+  'Perfect Dodge',
+  'Counterattack',
+  'Mid-air Attack',
+  'Plunging Attack',
+  'Heavy Attack',
+  'Basic Attack',
+  'Dodge Counter',
+  'Rover',
   'DMG',
   'ATK',
   'DEF',
@@ -185,8 +215,10 @@ const DO_NOT_TRANSLATE: string[] = [
   'Crit Rate',
   'Crit DMG',
   'DPS',
+  'DoT',
+  'Stamina',
 
-  // Echo sets
+  // ── Echo sets ────────────────────────────────────────────────
   'Moonlit Clouds',
   'Empyrean Anthem',
   'Rejuvenating Glow',
@@ -200,61 +232,174 @@ const DO_NOT_TRANSLATE: string[] = [
   'Molten Rift',
   'Freezing Frost',
   'Midnight Veil',
+  'Tidebreaking Courage',
+  'Gusts of Welkin',
+  'Dream of the Shoreless Sea',
+  'Zeal of the Logeth River',
 
-  // Specific mechanics
+  // ── Echo-specific mechanics ──────────────────────────────────
   'Spectro Frazzle',
   'Heliacal Ember',
   'Phantasmic Imprint',
   'Afflatus',
   'Inklit Spirit',
+  'Vibration Strength',
+  'Energy Regen',
 
-  // Banner types
+  // ── Banner types ─────────────────────────────────────────────
   'Featured Resonator Convene',
   'Featured Weapon Convene',
+  'Beginner Convene',
+  'Standard Resonator Convene',
+  'Standard Weapon Convene',
 
-  // General / exploration / MMO (keep English in news & guides)
+  // ── Locations ────────────────────────────────────────────────
+  'Solaris-3',
+  'Jinzhou',
+  'Huanglong',
+  'Mt. Firmament',
+  'Whining Aix\'s Mire',
+  'Dim Forest',
+  'Hollow Mirage',
+  'Ragunna',
+  'Rinascita',
+  'Tethys Deep',
+  'Black Shores',
+  'Geode Cove',
+  'Mt. Lanhua',
+
+  // ── Factions / Organizations ─────────────────────────────────
+  'Huaxu Research',
+  'Hollow Special Operations Section 6',
+  'Midnight Rangers',
+  'Obol Squad',
+  'Covenant',
+  'Union',
+  'Sentinel',
+  'Abstainer',
+
+  // ── Story / Lore terms ───────────────────────────────────────
+  'Lament',
+  'Calamity',
+  'Overture',
+  'Loong',
+
+  // ── Boss / World boss names ──────────────────────────────────
+  'Bell-Borne Geochelone',
+  'Impermanence Heron',
+  'Tempest Mephis',
+  'Thundering Mephis',
+  'Lampylumen Myriad',
+  'Fallacy of No Return',
+  'Scar',
+  'Crownless',
+  'Dreamless',
+  'Jue',
+  'Mourning Aix',
+  'Feilian Beringal',
+  'Inferno Rider',
+  'Mech Abomination',
+  'Carapace',
+  'Hecate',
+
+  // ── Weapon names (5★) ────────────────────────────────────────
+  'Emerald of Genesis',
+  'Lumingloss',
+  'Blazing Brilliance',
+  'Ages of Harvest',
+  'Verdant Summit',
+  'Stringmaster',
+  'Cosmic Ripples',
+  'Static Mist',
+  'Abyss Surges',
+  'Jiyan\'s Broadblade',         // limited collab/event weapons may appear in news
+  'Jinhsi\'s Sword',
+
+  // ── General / exploration / MMO ──────────────────────────────
   'mount-like',
   'Mounts',
   'Mount',
 
-  // Character names (should never be translated)
+  // ── Character names ──────────────────────────────────────────
+  // 1.x roster
   'Rover',
+  'Aalto',
+  'Baizhi',
+  'Calcharo',
+  'Chixia',
+  'Danjin',
+  'Encore',
+  'Jiyan',
+  'Jianxin',
+  'Lingyang',
+  'Mortefi',
+  'Sanhua',
+  'Taoqi',
+  'Verina',
+  'Yangyang',
+  'Yinlin',
+  'Yuanwu',
+  // 1.1+
   'Jinhsi',
   'Changli',
+  // 1.2+
   'Zhezhi',
-  'Carlotta',
-  'Camellya',
+  'Xiangli Yao',
+  // 1.3+
   'Shorekeeper',
-  'Phoebe',
+  'Youhu',
+  // 1.4+
+  'Camellya',
+  'Lumi',
+  // 2.0+
+  'Carlotta',
   'Roccia',
+  'Zani',
+  // 2.1+
+  'Phoebe',
   'Brant',
+  // 2.2+
   'Cantarella',
   'Ciaccona',
+  // 2.3+
   'Cartethyia',
   'Lupa',
-  'Zani',
+  // 2.4+
   'Aemeath',
   'Mornye',
   'Chisa',
+  // Upcoming / leaked (jobb ha benne van, minthogy hiányzik)
+  'Phrolova',
 ];
 
 /**
  * Wrap glossary terms so DeepL HTML mode will not translate them.
- * DeepL ignores only `translate="no"` / `class="notranslate"` in HTML handling;
- * `<var>` contents are still translated (e.g. "mount" → wrong guesses).
+ *
+ * FIX vs original: \b word-boundary fails for names ending/starting with
+ * non-ASCII word chars (e.g. accented letters) and for terms containing
+ * hyphens like "mount-like". We use a lookahead/lookbehind on \w instead,
+ * which is safer across all the WW-specific terms.
  */
 const GLOSSARY_SPAN_OPEN = '<span class="gh-glossary notranslate" translate="no">';
 const GLOSSARY_SPAN_CLOSE = '</span>';
 
 function protectGlossary(text: string): string {
-  // Sort by length descending so longer terms match first
+  // Deduplicate and sort longest-first so multi-word phrases match before
+  // their constituent words ("Resonance Skill" before "Skill").
   const sorted = [...new Set(DO_NOT_TRANSLATE)].sort((a, b) => b.length - a.length);
+
   let result = text;
   for (const term of sorted) {
-    // Case-insensitive match, but preserve original casing
-    const regex = new RegExp(`(?<!<[^>]*)\\b(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'gi');
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Use (?<!\w) / (?!\w) instead of \b so that:
+    //  - hyphenated terms like "mount-like" work correctly
+    //  - names adjacent to HTML punctuation (quotes, tags) are still caught
+    const regex = new RegExp(`(?<!\\w)(${escaped})(?!\\w)`, 'gi');
+
     result = result.replace(
       regex,
+      // Use $1 to preserve the original casing from the source text
       `${GLOSSARY_SPAN_OPEN}$1${GLOSSARY_SPAN_CLOSE}`
     );
   }
