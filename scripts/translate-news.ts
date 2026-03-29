@@ -11,6 +11,8 @@
  * Environment variables (per game):
  *   DEEPL_KEY_WUTHERING_WAVES=xxx
  *   DEEPL_KEY_HONKAI_STAR_RAIL=xxx  (future)
+ * Optional (Pro vs Free): DEEPL_API_URL=https://api.deepl.com/v2/translate
+ *   Defaults to https://api-free.deepl.com/v2/translate
  */
 
 import 'dotenv/config';
@@ -47,7 +49,8 @@ const CHAR_TRANSLATIONS_DIR = path.join(ROOT, 'src/features/characters/translati
 const HASHES_PATH = path.join(ROOT, 'scripts/.translation-hashes.json');
 
 // ─── DeepL ───────────────────────────────────────────────────
-const DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate';
+const DEEPL_API_URL =
+  process.env.DEEPL_API_URL?.trim() || 'https://api-free.deepl.com/v2/translate';
 
 async function deeplTranslate(
   text: string,
