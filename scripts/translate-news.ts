@@ -7,6 +7,7 @@
  *   npm run translate -- wuthering-waves      # translate one game only
  *   npm run translate -- wuthering-waves news # translate only news for one game
  *   npm run translate -- wuthering-waves chars # translate only characters for one game
+ *   npm run translate -- wuthering-waves news news-force # re-translate all fetched news (ignore hash cache)
  *
  * Environment variables (per game):
  *   DEEPL_KEY_WUTHERING_WAVES=xxx
@@ -207,6 +208,11 @@ const DO_NOT_TRANSLATE: string[] = [
   'Featured Resonator Convene',
   'Featured Weapon Convene',
 
+  // General / exploration / MMO (keep English in news & guides)
+  'mount-like',
+  'Mounts',
+  'Mount',
+
   // Character names (should never be translated)
   'Rover',
   'Jinhsi',
@@ -229,9 +235,13 @@ const DO_NOT_TRANSLATE: string[] = [
 ];
 
 /**
- * Wrap glossary terms with <var> so DeepL won't translate them.
- * DeepL respects XML/HTML tags and leaves <var> content as-is.
+ * Wrap glossary terms so DeepL HTML mode will not translate them.
+ * DeepL ignores only `translate="no"` / `class="notranslate"` in HTML handling;
+ * `<var>` contents are still translated (e.g. "mount" → wrong guesses).
  */
+const GLOSSARY_SPAN_OPEN = '<span class="gh-glossary notranslate" translate="no">';
+const GLOSSARY_SPAN_CLOSE = '</span>';
+
 function protectGlossary(text: string): string {
   // Sort by length descending so longer terms match first
   const sorted = [...new Set(DO_NOT_TRANSLATE)].sort((a, b) => b.length - a.length);
@@ -239,16 +249,21 @@ function protectGlossary(text: string): string {
   for (const term of sorted) {
     // Case-insensitive match, but preserve original casing
     const regex = new RegExp(`(?<!<[^>]*)\\b(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'gi');
-    result = result.replace(regex, '<var>$1</var>');
+    result = result.replace(
+      regex,
+      `${GLOSSARY_SPAN_OPEN}$1${GLOSSARY_SPAN_CLOSE}`
+    );
   }
   return result;
 }
 
 /**
- * Remove <var> wrapper tags from translated text.
+ * Remove glossary wrapper spans (and legacy <var> from older runs).
  */
 function unprotectGlossary(text: string): string {
-  return text.replace(/<\/?var>/g, '');
+  let out = text.replace(/<\/?var>/g, '');
+  out = out.replace(/<span[^>]*\bgh-glossary\b[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+  return out;
 }
 
 // ─── HTML cleanup — remove dark inline colors ────────────────
@@ -367,13 +382,19 @@ interface WpPost {
   link: string;
 }
 
-async function translateNews(config: GameConfig, apiKey: string, hashes: Record<string, string>): Promise<void> {
+async function translateNews(
+  config: GameConfig,
+  apiKey: string,
+  hashes: Record<string, string>,
+  force: boolean
+): Promise<void> {
   if (!config.newsApiUrl) {
     console.log('  News: no API configured, skipping');
     return;
   }
 
   console.log('\n  ── NEWS ──');
+  if (force) console.log('  (news-force: ignoring hash cache)');
   console.log('  Fetching news...');
 
   const res = await fetch(`${config.newsApiUrl}?per_page=20`);
@@ -399,7 +420,7 @@ async function translateNews(config: GameConfig, apiKey: string, hashes: Record<
     const contentHash = md5(title + content);
     const cacheKey = `news:${config.slug}:${post.slug}`;
 
-    if (hashes[cacheKey] === contentHash && cache[post.slug]) {
+    if (!force && hashes[cacheKey] === contentHash && cache[post.slug]) {
       skipped++;
       continue;
     }
@@ -590,8 +611,11 @@ async function translateCharacters(config: GameConfig, apiKey: string, hashes: R
 async function main(): Promise<void> {
   console.log('=== Translation script ===\n');
 
-  const targetSlug = process.argv[2];
-  const targetType = process.argv[3]; // 'news' | 'chars' | undefined (both)
+  const rawArgs = process.argv.slice(2);
+  const newsForce = rawArgs.includes('news-force');
+  const positional = rawArgs.filter((a) => a !== 'news-force');
+  const targetSlug = positional[0];
+  const targetType = positional[1]; // 'news' | 'chars' | undefined (both)
 
   const configs = targetSlug
     ? GAME_CONFIGS.filter((c) => c.slug === targetSlug)
@@ -602,6 +626,8 @@ async function main(): Promise<void> {
     console.log(`Available: ${GAME_CONFIGS.map((c) => c.slug).join(', ')}`);
     process.exit(1);
   }
+
+  const applyNewsForce = newsForce && targetType === 'news';
 
   const hashes: Record<string, string> = loadJson(HASHES_PATH, {});
 
@@ -616,7 +642,7 @@ async function main(): Promise<void> {
     console.log(`  DeepL key: ***set***`);
 
     if (!targetType || targetType === 'news') {
-      await translateNews(config, apiKey, hashes);
+      await translateNews(config, apiKey, hashes, applyNewsForce);
     }
     if (!targetType || targetType === 'chars') {
       await translateCharacters(config, apiKey, hashes);
