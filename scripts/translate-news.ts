@@ -130,6 +130,10 @@ async function deeplTranslateBatch(
 // These terms are wrapped in <var> tags before sending to DeepL
 // so they stay untouched. Works with tag_handling: 'html'.
 const DO_NOT_TRANSLATE: string[] = [
+  // Game title & official event phrasing (DeepL must not paraphrase)
+  'Wuthering Waves',
+  'Battle Rush',
+
   // Resources & items
   'Astrite',
   'Shell Credit',

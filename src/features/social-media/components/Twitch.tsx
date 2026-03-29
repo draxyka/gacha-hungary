@@ -1,21 +1,38 @@
 'use client';
 
-// TODO: Twitch API key lejárt - jelenleg Twitch embed iframe-mel működik
-// TODO: Production-ben a parent paramétert a valós domain-re cserélni
+import { useEffect, useState } from 'react';
 
+/**
+ * Iframe `parent` must match the real page host. On SSR, `window` is missing — we set `src`
+ * after mount so production domain / localhost are both correct (no bogus `parent=localhost` on the server HTML).
+ */
 export default function Twitch({ channel }: { channel: string }) {
-  const parent = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const [embedSrc, setEmbedSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams({
+      channel,
+      parent: window.location.hostname,
+    });
+    setEmbedSrc(`https://player.twitch.tv/?${params.toString()}`);
+  }, [channel]);
 
   return (
     <div className="rounded-2xl overflow-hidden bg-white/5 border border-white/10 transition-all duration-300 hover:border-purple-500/30 hover:bg-white/10">
       <div className="aspect-video">
-        <iframe
-          src={`https://player.twitch.tv/?channel=${channel}&parent=${parent}`}
-          allowFullScreen
-          loading="lazy"
-          className="w-full h-full"
-          title={`${channel} Twitch stream`}
-        />
+        {embedSrc ? (
+          <iframe
+            src={embedSrc}
+            allowFullScreen
+            loading="lazy"
+            className="h-full w-full border-0"
+            title={`${channel} Twitch stream`}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-black/50 text-sm text-white/50">
+            Stream betöltése…
+          </div>
+        )}
       </div>
       <div className="p-4 flex items-center justify-between">
         <a
