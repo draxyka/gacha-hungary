@@ -1,122 +1,25 @@
-import { NewsItem, WpPost } from './types/news.type';
+import { NewsItem } from './types/news.type';
+import { fetchWuwaNewsList, fetchWuwaNewsById } from './wuwa.news.service';
+import { fetchNteNewsList, fetchNteNewsById } from './nte.news.service';
 
-// Per-game API config — add new games here
-const NEWS_API: Record<string, string> = {
-  'wuthering-waves': 'https://wutheringwaves.gg/wp-json/wp/v2/posts',
-  // TODO: 'honkai-star-rail': '...',
-  // TODO: 'zenless-zone-zero': '...',
-  // TODO: 'genshin-impact': '...',
-};
-
-/** Slugs to hide (spam / off-topic posts still returned by the upstream WP feed). */
-const BLOCKED_NEWS_SLUGS: Record<string, ReadonlySet<string>> = {
-  'wuthering-waves': new Set([
-    'does-the-martingale-strategy-really-work-a-statistical-analysis',
-    'gamezone-rebate-framework-strategic-cashback-integration-for-pacquiao-themed-bingo-and-color-game',
-  ]),
-};
-
-function isNewsSlugBlocked(gameSlug: string, postSlug: string): boolean {
-  return BLOCKED_NEWS_SLUGS[gameSlug]?.has(postSlug) ?? false;
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&hellip;/g, '...').replace(/&#8217;/g, "'").replace(/&#8220;/g, '"').replace(/&#8221;/g, '"').replace(/&#038;/g, '&').replace(/&nbsp;/g, ' ').trim();
-}
-
-// ─── Translation cache ────────────────────────────────────────
-type TranslationEntry = { title: string; excerpt: string; content: string };
-type TranslationCache = Record<string, TranslationEntry>;
-
-const translationCaches = new Map<string, TranslationCache>();
-
-/**
- * Dynamically import the translation JSON for a game slug.
- * Returns {} if no translations exist yet.
- */
-async function getTranslations(gameSlug: string): Promise<TranslationCache> {
-  if (translationCaches.has(gameSlug)) {
-    return translationCaches.get(gameSlug)!;
-  }
-
-  try {
-    // Dynamic import works at build-time in Next.js server components
-    const mod = await import(`./translations/${gameSlug}.json`);
-    const data: TranslationCache = mod.default ?? mod;
-    translationCaches.set(gameSlug, data);
-    return data;
-  } catch {
-    translationCaches.set(gameSlug, {});
-    return {};
+export async function fetchNewsList(gameSlug: string, perPage = 4): Promise<NewsItem[]> {
+  switch (gameSlug) {
+    case 'wuthering-waves':
+      return fetchWuwaNewsList(perPage);
+    case 'neverness-to-everness':
+      return fetchNteNewsList(perPage);
+    default:
+      return [];
   }
 }
 
-function mapPost(
-  post: WpPost,
-  translations: TranslationCache
-): NewsItem {
-  const image = post.yoast_head_json?.og_image?.[0]?.url ?? null;
-  const tr = translations[post.slug];
-
-  return {
-    id: post.id,
-    slug: post.slug,
-    title: tr?.title ?? stripHtml(post.title.rendered),
-    excerpt: tr?.excerpt ?? stripHtml(post.excerpt.rendered),
-    content: tr?.content ?? post.content.rendered,
-    image,
-    createdAt: post.date,
-    sourceUrl: post.link,
-  };
-}
-
-/** Fetch news list — uses translated content when available, english fallback */
-export async function fetchNewsList(
-  gameSlug: string,
-  perPage = 12
-): Promise<NewsItem[]> {
-  const apiUrl = NEWS_API[gameSlug];
-  if (!apiUrl) return [];
-
-  try {
-    const [res, translations] = await Promise.all([
-      fetch(`${apiUrl}?per_page=${perPage}`, {
-        next: { revalidate: 3600 },
-      }),
-      getTranslations(gameSlug),
-    ]);
-    if (!res.ok) return [];
-    const posts: WpPost[] = await res.json();
-    return posts
-      .filter((p) => !isNewsSlugBlocked(gameSlug, p.slug))
-      .map((p) => mapPost(p, translations));
-  } catch {
-    return [];
-  }
-}
-
-/** Fetch a single news article by its slug */
-export async function fetchNewsBySlug(
-  gameSlug: string,
-  articleSlug: string
-): Promise<NewsItem | null> {
-  const apiUrl = NEWS_API[gameSlug];
-  if (!apiUrl) return null;
-
-  try {
-    const [res, translations] = await Promise.all([
-      fetch(`${apiUrl}?slug=${encodeURIComponent(articleSlug)}`, {
-        next: { revalidate: 3600 },
-      }),
-      getTranslations(gameSlug),
-    ]);
-    if (!res.ok) return null;
-    const posts: WpPost[] = await res.json();
-    if (posts.length === 0) return null;
-    const post = posts[0];
-    if (isNewsSlugBlocked(gameSlug, post.slug)) return null;
-    return mapPost(post, translations);
-  } catch {
-    return null;
+export async function fetchNewsById(gameSlug: string, id: string): Promise<NewsItem | null> {
+  switch (gameSlug) {
+    case 'wuthering-waves':
+      return fetchWuwaNewsById(id);
+    case 'neverness-to-everness':
+      return fetchNteNewsById(id);
+    default:
+      return null;
   }
 }

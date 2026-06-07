@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { HOME_ITEMS } from './home.data';
 import { GAME_COLORS } from '@/constants/games';
 
-const ENABLED_SLUGS = ['wuthering-waves'];
+const ENABLED_SLUGS = ['wuthering-waves', 'neverness-to-everness'];
 
 export default function Home() {
   return (

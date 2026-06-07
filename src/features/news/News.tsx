@@ -11,7 +11,7 @@ function formatDate(date: string) {
 }
 
 export default async function News({ slug }: { slug: string }) {
-  const news = await fetchNewsList(slug, 12);
+  const news = await fetchNewsList(slug);
   const [featured, ...rest] = news;
 
   return (
@@ -47,9 +47,6 @@ export default async function News({ slug }: { slug: string }) {
                 <h2 className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-wide leading-tight max-w-3xl">
                   {featured.title}
                 </h2>
-                <p className="mt-3 text-sm md:text-base text-white/60 leading-relaxed max-w-2xl line-clamp-2">
-                  {featured.excerpt}
-                </p>
               </div>
             </article>
           </Link>
@@ -78,7 +75,6 @@ export default async function News({ slug }: { slug: string }) {
                       {formatDate(newsItem.createdAt)}
                     </time>
                     <h2 className="mt-2 text-lg font-semibold text-white tracking-wide">{newsItem.title}</h2>
-                    <p className="mt-2 text-sm text-white/60 leading-relaxed line-clamp-2">{newsItem.excerpt}</p>
                   </div>
                 </article>
               </Link>

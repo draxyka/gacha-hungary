@@ -26,7 +26,9 @@ type GameConfig = {
   slug: string;
   name: string;
   envKey: string;
+  newsApiType: 'kuro' | 'wordpress' | null;
   newsApiUrl: string | null;
+  excludeCategories: number[];
   charListUrl: string | null;
   charDetailUrl: ((slug: string) => string) | null;
 };
@@ -36,7 +38,9 @@ const GAME_CONFIGS: GameConfig[] = [
     slug: 'wuthering-waves',
     name: 'Wuthering Waves',
     envKey: 'DEEPL_KEY_WUTHERING_WAVES',
-    newsApiUrl: 'https://wutheringwaves.gg/wp-json/wp/v2/posts',
+    newsApiType: 'kuro',
+    newsApiUrl: 'https://hw-media-cdn-mingchao.kurogame.com/akiwebsite/website2.0/json/G152/en/MainMenu.json',
+    excludeCategories: [],
     charListUrl: 'https://www.prydwen.gg/page-data/sq/d/3446734364.json',
     charDetailUrl: (s) => `https://www.prydwen.gg/page-data/wuthering-waves/characters/${s}/page-data.json`,
   },
@@ -177,6 +181,7 @@ const DO_NOT_TRANSLATE: string[] = [
   'Rectifier',
 
   // ── Core game mechanics ──────────────────────────────────────
+  'Resonators',
   'Resonator',
   'Resonance Skill',
   'Resonance Liberation',
@@ -209,6 +214,9 @@ const DO_NOT_TRANSLATE: string[] = [
   'Basic Attack',
   'Dodge Counter',
   'Rover',
+  '5-Star',
+  '4-Star',
+  '3-Star',
   'DMG',
   'ATK',
   'DEF',
@@ -279,6 +287,18 @@ const DO_NOT_TRANSLATE: string[] = [
   'Union',
   'Sentinel',
   'Abstainer',
+
+  // ── Collaboration / crossover titles ─────────────────────────
+  'Cyberpunk: Edgerunners',
+  'Edgerunners',
+  'The Dream Not Dreamed',
+  'Collaborations',
+  'Collaboration',
+  'Collab Convene',
+  'Collab Quests',
+  'Collab Events',
+  'Collab',
+  'Preview Special Broadcast',
 
   // ── Story / Lore terms ───────────────────────────────────────
   'Lament',
@@ -370,9 +390,27 @@ const DO_NOT_TRANSLATE: string[] = [
   'Aemeath',
   'Mornye',
   'Chisa',
+  // 3.x+
+  'Denia',
+  'Buling',
+  'Lynae',
   // Upcoming / leaked (jobb ha benne van, minthogy hiányzik)
   'Phrolova',
 ];
+
+/**
+ * Wrap content inside [], (), and "" in translate="no" spans so DeepL skips them.
+ * Game names like [False Promise for Tomorrow] or "Resonator: Denia" must stay in English.
+ * For "" we skip HTML attribute values (preceded by =).
+ */
+function protectBrackets(text: string): string {
+  // Wrap [content] and (content) so DeepL skips them.
+  // "..." is intentionally skipped — DeepL HTML-encodes content inside translate="no"
+  // spans for quoted strings, producing &quot; entities in the output.
+  return text
+    .replace(/\[([^\]]+)\]/g, '<span translate="no">[$1]</span>')
+    .replace(/\(([^)]{1,60})\)/g, '<span translate="no">($1)</span>');
+}
 
 /**
  * Wrap glossary terms so DeepL HTML mode will not translate them.
@@ -414,6 +452,7 @@ function protectGlossary(text: string): string {
 function unprotectGlossary(text: string): string {
   let out = text.replace(/<\/?var>/g, '');
   out = out.replace(/<span[^>]*\bgh-glossary\b[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+  out = out.replace(/<span[^>]*translate="no"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
   return out;
 }
 
@@ -519,42 +558,63 @@ function renderNode(node: Record<string, unknown>): string {
   }
 }
 
+
 // ═══════════════════════════════════════════════════════════════
 // NEWS TRANSLATION
 // ═══════════════════════════════════════════════════════════════
 
-interface WpPost {
-  id: number;
-  slug: string;
-  date: string;
-  title: { rendered: string };
-  excerpt: { rendered: string };
-  content: { rendered: string };
-  link: string;
+interface KuroArticle {
+  articleId: number;
+  articleTitle: string;
+  articleContent: string;
+  articleDesc: string;
+  createTime: string;
+  suggestCover: string;
 }
 
-async function translateNews(
+interface KuroMenuResponse {
+  article: KuroArticle[];
+}
+
+/**
+ * Kuro HTML-t megtisztít DeepL-nek:
+ * - Leveszi a <span style="font-size: 14pt;"> burkolókat (tartalom megmarad)
+ * - <br><br> → </p><p> (bekezdés)
+ * - Egyszeres <br> → szóköz (ne törjön szét mondatot)
+ */
+function cleanKuroHtml(html: string): string {
+  return html
+    .replace(/<span\s+style="font-size:\s*14pt;">/gi, '')
+    .replace(/<\/span>/gi, '')
+    .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '</p><p>')
+    .replace(/<br\s*\/?>/gi, ' ');
+}
+
+async function translateNewsKuro(
   config: GameConfig,
   apiKey: string,
   hashes: Record<string, string>,
   force: boolean
 ): Promise<void> {
-  if (!config.newsApiUrl) {
-    console.log('  News: no API configured, skipping');
-    return;
-  }
+  const ARTICLE_URL = (id: number) =>
+    `https://hw-media-cdn-mingchao.kurogame.com/akiwebsite/website2.0/json/G152/en/article/${id}.json`;
 
-  console.log('\n  ── NEWS ──');
-  if (force) console.log('  (news-force: ignoring hash cache)');
-  console.log('  Fetching news...');
-
-  const res = await fetch(`${config.newsApiUrl}?per_page=20`);
+  console.log('  Fetching news list...');
+  const res = await fetch(config.newsApiUrl!);
   if (!res.ok) {
-    console.warn(`  Warning: News API returned ${res.status}`);
+    console.warn(`  Warning: Kuro news API returned ${res.status}`);
     return;
   }
-  const posts: WpPost[] = await res.json();
-  console.log(`  Found ${posts.length} articles`);
+  const data: KuroMenuResponse = await res.json();
+  const seen = new Set<number>();
+  const articles = (data.article ?? [])
+    .filter(a => {
+      if (seen.has(a.articleId)) return false;
+      seen.add(a.articleId);
+      return true;
+    })
+    .slice(0, 4);
+  console.log(`  Found ${articles.length} articles`);
 
   const cachePath = path.join(NEWS_TRANSLATIONS_DIR, `${config.slug}.json`);
   const cache: Record<string, { title: string; excerpt: string; content: string }> =
@@ -563,15 +623,25 @@ async function translateNews(
   let translated = 0;
   let skipped = 0;
 
-  for (const post of posts) {
-    const title = stripHtml(post.title.rendered);
-    const excerpt = stripHtml(post.excerpt.rendered);
-    const content = post.content.rendered;
+  for (const item of articles) {
+    const key = item.articleId.toString();
+    const cacheKey = `news:${config.slug}:${key}`;
 
+    // Fetch full article content
+    const articleRes = await fetch(ARTICLE_URL(item.articleId));
+    if (!articleRes.ok) {
+      console.warn(`  Warning: article ${item.articleId} returned ${articleRes.status}`);
+      continue;
+    }
+    const article: KuroArticle = await articleRes.json();
+
+    const title = article.articleTitle;
+    // Clean Kuro HTML before hashing and translating
+    const content = cleanKuroHtml(article.articleContent ?? '');
+    const excerpt = stripHtml(content).slice(0, 220);
     const contentHash = md5(title + content);
-    const cacheKey = `news:${config.slug}:${post.slug}`;
 
-    if (!force && hashes[cacheKey] === contentHash && cache[post.slug]) {
+    if (!force && hashes[cacheKey] === contentHash && cache[key]) {
       skipped++;
       continue;
     }
@@ -579,30 +649,46 @@ async function translateNews(
     console.log(`  Translating: "${title.substring(0, 55)}..."`);
 
     try {
-      // Protect glossary terms, translate, then unprotect
-      const [huTitleRaw, huExcerptRaw] = await deeplTranslateBatch(
-        [protectGlossary(title), protectGlossary(excerpt)],
-        apiKey,
-        'html'
-      );
-      const huContentRaw = await deeplTranslate(protectGlossary(content), apiKey, 'html');
+      const huTitleRaw = await deeplTranslate(protectGlossary(protectBrackets(title)), apiKey, 'html');
+      const huExcerptRaw = await deeplTranslate(protectGlossary(protectBrackets(excerpt)), apiKey, 'html');
+      const huContentRaw = await deeplTranslate(protectGlossary(protectBrackets(content)), apiKey, 'html');
 
-      // Unprotect glossary + clean dark inline colors
       const huTitle = unprotectGlossary(huTitleRaw);
       const huExcerpt = unprotectGlossary(huExcerptRaw);
       const huContent = cleanDarkColors(unprotectGlossary(huContentRaw));
 
-      cache[post.slug] = { title: huTitle, excerpt: huExcerpt, content: huContent };
+      cache[key] = { title: huTitle, excerpt: huExcerpt, content: huContent };
       hashes[cacheKey] = contentHash;
       translated++;
       await sleep(600);
     } catch (err) {
-      console.error(`  Error: ${post.slug}:`, err);
+      console.error(`  Error article ${key}:`, err);
     }
   }
 
   saveJson(cachePath, cache);
   console.log(`  News: ${translated} translated, ${skipped} cached.`);
+}
+
+async function translateNews(
+  config: GameConfig,
+  apiKey: string,
+  hashes: Record<string, string>,
+  force: boolean
+): Promise<void> {
+  if (!config.newsApiUrl || !config.newsApiType) {
+    console.log('  News: no API configured, skipping');
+    return;
+  }
+
+  console.log('\n  ── NEWS ──');
+  if (force) console.log('  (news-force: ignoring hash cache)');
+
+  if (config.newsApiType === 'kuro') {
+    await translateNewsKuro(config, apiKey, hashes, force);
+  } else {
+    console.log('  News: wordpress API type no longer supported');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════

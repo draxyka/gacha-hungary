@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { fetchNewsBySlug } from './news.service';
+import { fetchNewsById } from './news.service';
 import { notFound } from 'next/navigation';
 import './news-content.css';
 
 export default async function NewsDetail({ slug, id }: { slug: string; id: string }) {
-  const article = await fetchNewsBySlug(slug, id);
+  const article = await fetchNewsById(slug, id);
 
   if (!article) {
     notFound();
@@ -35,13 +35,20 @@ export default async function NewsDetail({ slug, id }: { slug: string; id: strin
             {article.title}
           </h1>
 
-          <time className="block mt-4 text-center text-sm uppercase tracking-[0.2em] text-gray-400">
-            {new Date(article.createdAt).toLocaleDateString('hu-HU', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </time>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <time className="text-sm uppercase tracking-[0.2em] text-gray-400">
+              {new Date(article.createdAt).toLocaleDateString('hu-HU', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </time>
+            {article.category && (
+              <span className="text-xs uppercase tracking-[0.15em] text-amber-400/80 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
+                {article.category}
+              </span>
+            )}
+          </div>
 
           <div className="mt-3 mb-12 flex justify-center">
             <span className="block w-16 h-[2px] bg-white/20 rounded-full" />
@@ -59,7 +66,7 @@ export default async function NewsDetail({ slug, id }: { slug: string; id: strin
               rel="noopener noreferrer"
               className="text-sm text-white/40 hover:text-white/70 transition-colors"
             >
-              Eredeti forrás: wutheringwaves.gg
+              Eredeti forrás: {new URL(article.sourceUrl).hostname}
             </Link>
           </div>
         </article>
