@@ -1,12 +1,10 @@
 /**
- * Translation script — fetches news & character data, translates
- * new/changed content via DeepL, saves to per-game JSON caches.
+ * Translation script — fetches news, translates new/changed articles
+ * via DeepL, saves to per-game JSON caches.
  *
  * Usage:
- *   npm run translate                         # translate all games (news + characters)
+ *   npm run translate                         # translate all games
  *   npm run translate -- wuthering-waves      # translate one game only
- *   npm run translate -- wuthering-waves news # translate only news for one game
- *   npm run translate -- wuthering-waves chars # translate only characters for one game
  *   npm run translate -- wuthering-waves news news-force # re-translate all fetched news (ignore hash cache)
  *
  * Environment variables (per game):
@@ -29,8 +27,6 @@ type GameConfig = {
   newsApiType: 'kuro' | 'wordpress' | null;
   newsApiUrl: string | null;
   excludeCategories: number[];
-  charListUrl: string | null;
-  charDetailUrl: ((slug: string) => string) | null;
 };
 
 const GAME_CONFIGS: GameConfig[] = [
@@ -41,8 +37,6 @@ const GAME_CONFIGS: GameConfig[] = [
     newsApiType: 'kuro',
     newsApiUrl: 'https://hw-media-cdn-mingchao.kurogame.com/akiwebsite/website2.0/json/G152/en/MainMenu.json',
     excludeCategories: [],
-    charListUrl: 'https://www.prydwen.gg/page-data/sq/d/3446734364.json',
-    charDetailUrl: (s) => `https://www.prydwen.gg/page-data/wuthering-waves/characters/${s}/page-data.json`,
   },
   // TODO: add more games
 ];
@@ -50,7 +44,6 @@ const GAME_CONFIGS: GameConfig[] = [
 // ─── Paths ───────────────────────────────────────────────────
 const ROOT = path.resolve(__dirname, '..');
 const NEWS_TRANSLATIONS_DIR = path.join(ROOT, 'src/features/news/translations');
-const CHAR_TRANSLATIONS_DIR = path.join(ROOT, 'src/features/characters/translations');
 const HASHES_PATH = path.join(ROOT, 'scripts/.translation-hashes.json');
 
 // ─── DeepL ───────────────────────────────────────────────────
@@ -87,47 +80,6 @@ async function deeplTranslate(
 
   const data = await res.json();
   return data.translations?.[0]?.text ?? text;
-}
-
-async function deeplTranslateBatch(
-  texts: string[],
-  apiKey: string,
-  tagHandling?: 'html'
-): Promise<string[]> {
-  // Filter out empty texts but keep track of positions
-  const nonEmpty = texts.map((t, i) => ({ text: t, idx: i })).filter((t) => t.text.trim());
-  if (nonEmpty.length === 0) return texts.map(() => '');
-
-  const body: Record<string, unknown> = {
-    text: nonEmpty.map((t) => t.text),
-    source_lang: 'EN',
-    target_lang: 'HU',
-  };
-  if (tagHandling) body.tag_handling = tagHandling;
-
-  const res = await fetch(DEEPL_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `DeepL-Auth-Key ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const respBody = await res.text();
-    throw new Error(`DeepL error ${res.status}: ${respBody}`);
-  }
-
-  const data = await res.json();
-  const translated = (data.translations ?? []).map((t: { text: string }) => t.text);
-
-  // Map results back to original positions
-  const result = [...texts];
-  nonEmpty.forEach((item, i) => {
-    result[item.idx] = translated[i] ?? texts[item.idx];
-  });
-  return result;
 }
 
 // ─── Glossary — words that should NOT be translated ──────────
@@ -522,43 +474,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// ─── Rich text → HTML (same logic as characters.service.ts) ──
-function richTextToHtml(raw: string | undefined): string {
-  if (!raw) return '';
-  try {
-    const doc = JSON.parse(raw);
-    return renderNode(doc);
-  } catch {
-    return '';
-  }
-}
-
-function renderNode(node: Record<string, unknown>): string {
-  if (node.nodeType === 'text') {
-    let text = (node.value as string) ?? '';
-    const marks = (node.marks as { type: string }[]) ?? [];
-    for (const mark of marks) {
-      if (mark.type === 'bold') text = `<strong>${text}</strong>`;
-      if (mark.type === 'underline') text = `<u>${text}</u>`;
-      if (mark.type === 'italic') text = `<em>${text}</em>`;
-    }
-    return text;
-  }
-  const children = (node.content as Record<string, unknown>[])?.map(renderNode).join('') ?? '';
-  switch (node.nodeType) {
-    case 'document': return children;
-    case 'paragraph': return `<p>${children}</p>`;
-    case 'heading-6': return `<h3>${children}</h3>`;
-    case 'heading-5': return `<h3>${children}</h3>`;
-    case 'heading-4': return `<h2>${children}</h2>`;
-    case 'unordered-list': return `<ul>${children}</ul>`;
-    case 'ordered-list': return `<ol>${children}</ol>`;
-    case 'list-item': return `<li>${children}</li>`;
-    default: return children;
-  }
-}
-
-
 // ═══════════════════════════════════════════════════════════════
 // NEWS TRANSLATION
 // ═══════════════════════════════════════════════════════════════
@@ -692,156 +607,6 @@ async function translateNews(
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CHARACTER TRANSLATION
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Translation shape for a single character.
- * Each field is the translated HTML string.
- */
-type CharTranslation = {
-  introduction?: string;
-  review?: string;
-  pros?: string;
-  cons?: string;
-  rotations?: string;
-  endgameStats?: string;
-  skills?: Record<string, string>;     // skill name → translated HTML
-  dupes?: Record<string, string>;      // dupe1..6 → translated HTML
-};
-
-// Fields on a Prydwen character detail that contain rich text
-const RICH_TEXT_FIELDS = ['introduction', 'review', 'pros', 'cons', 'rotations', 'endgameStats'] as const;
-
-async function translateCharacters(config: GameConfig, apiKey: string, hashes: Record<string, string>): Promise<void> {
-  if (!config.charListUrl || !config.charDetailUrl) {
-    console.log('  Characters: no API configured, skipping');
-    return;
-  }
-
-  console.log('\n  ── CHARACTERS ──');
-  console.log('  Fetching character list...');
-
-  const listRes = await fetch(config.charListUrl);
-  if (!listRes.ok) {
-    console.warn(`  Warning: Character list API returned ${listRes.status}`);
-    return;
-  }
-  const listData = await listRes.json();
-  const nodes: { slug: string; name: string; upcoming: boolean | null }[] =
-    listData.data?.allContentfulWwCharacter?.nodes ?? [];
-
-  const characters = nodes.filter((c) => !c.upcoming);
-  console.log(`  Found ${characters.length} characters`);
-
-  const cachePath = path.join(CHAR_TRANSLATIONS_DIR, `${config.slug}.json`);
-  const cache: Record<string, CharTranslation> = loadJson(cachePath, {});
-
-  let translated = 0;
-  let skipped = 0;
-
-  for (const char of characters) {
-    // Fetch detail
-    const detailRes = await fetch(config.charDetailUrl!(char.slug));
-    if (!detailRes.ok) {
-      console.warn(`  Warning: ${char.name} detail returned ${detailRes.status}`);
-      continue;
-    }
-    const detailData = await detailRes.json();
-    const detail = detailData.result?.data?.currentUnit?.nodes?.[0];
-    if (!detail) {
-      console.warn(`  Warning: ${char.name} — no detail data`);
-      continue;
-    }
-
-    // Build a fingerprint of all translatable content
-    const richTexts: string[] = [];
-    for (const field of RICH_TEXT_FIELDS) {
-      richTexts.push(detail[field]?.raw ?? '');
-    }
-    // Skills
-    const skills: { name: string; raw: string }[] = (detail.skills ?? []).map(
-      (s: { name: string; description: { raw: string } }) => ({
-        name: s.name,
-        raw: s.description?.raw ?? '',
-      })
-    );
-    for (const s of skills) richTexts.push(s.raw);
-    // Dupes
-    const dupeKeys = Object.keys(detail.dupes ?? {}).filter((k) => k.startsWith('dupe')).sort();
-    for (const dk of dupeKeys) richTexts.push(detail.dupes[dk]?.raw ?? '');
-
-    const contentHash = md5(richTexts.join('|'));
-    const cacheKey = `char:${config.slug}:${char.slug}`;
-
-    if (hashes[cacheKey] === contentHash && cache[char.slug]) {
-      skipped++;
-      continue;
-    }
-
-    console.log(`  Translating: ${char.name}...`);
-
-    try {
-      const tr: CharTranslation = {};
-
-      // ─ Translate rich text fields in batches ─
-      // Convert all to HTML first, protect glossary terms
-      const fieldHtmls = RICH_TEXT_FIELDS.map((f) => protectGlossary(richTextToHtml(detail[f]?.raw)));
-
-      // Batch translate all 6 fields at once
-      const translatedFields = await deeplTranslateBatch(fieldHtmls, apiKey, 'html');
-      await sleep(500);
-
-      for (let i = 0; i < RICH_TEXT_FIELDS.length; i++) {
-        if (fieldHtmls[i].trim()) {
-          tr[RICH_TEXT_FIELDS[i]] = unprotectGlossary(translatedFields[i]);
-        }
-      }
-
-      // ─ Translate skills ─
-      if (skills.length > 0) {
-        const skillHtmls = skills.map((s) => protectGlossary(richTextToHtml(s.raw)));
-        // Translate in batches of 10 to stay within limits
-        tr.skills = {};
-        for (let i = 0; i < skillHtmls.length; i += 10) {
-          const batch = skillHtmls.slice(i, i + 10);
-          const batchNames = skills.slice(i, i + 10);
-          const translatedBatch = await deeplTranslateBatch(batch, apiKey, 'html');
-          for (let j = 0; j < batchNames.length; j++) {
-            if (batch[j].trim()) {
-              tr.skills[batchNames[j].name] = unprotectGlossary(translatedBatch[j]);
-            }
-          }
-          await sleep(500);
-        }
-      }
-
-      // ─ Translate dupes ─
-      if (dupeKeys.length > 0) {
-        const dupeHtmls = dupeKeys.map((dk) => protectGlossary(richTextToHtml(detail.dupes[dk]?.raw)));
-        const translatedDupes = await deeplTranslateBatch(dupeHtmls, apiKey, 'html');
-        tr.dupes = {};
-        for (let i = 0; i < dupeKeys.length; i++) {
-          if (dupeHtmls[i].trim()) {
-            tr.dupes[dupeKeys[i]] = unprotectGlossary(translatedDupes[i]);
-          }
-        }
-        await sleep(500);
-      }
-
-      cache[char.slug] = tr;
-      hashes[cacheKey] = contentHash;
-      translated++;
-    } catch (err) {
-      console.error(`  Error: ${char.name}:`, err);
-    }
-  }
-
-  saveJson(cachePath, cache);
-  console.log(`  Characters: ${translated} translated, ${skipped} cached.`);
-}
-
-// ═══════════════════════════════════════════════════════════════
 // ENTRY POINT
 // ═══════════════════════════════════════════════════════════════
 
@@ -852,7 +617,7 @@ async function main(): Promise<void> {
   const newsForce = rawArgs.includes('news-force');
   const positional = rawArgs.filter((a) => a !== 'news-force');
   const targetSlug = positional[0];
-  const targetType = positional[1]; // 'news' | 'chars' | undefined (both)
+  const targetType = positional[1]; // 'news' | undefined
 
   const configs = targetSlug
     ? GAME_CONFIGS.filter((c) => c.slug === targetSlug)
@@ -878,12 +643,7 @@ async function main(): Promise<void> {
     console.log(`\n╔══ ${config.name.toUpperCase()} ══╗`);
     console.log(`  DeepL key: ***set***`);
 
-    if (!targetType || targetType === 'news') {
-      await translateNews(config, apiKey, hashes, applyNewsForce);
-    }
-    if (!targetType || targetType === 'chars') {
-      await translateCharacters(config, apiKey, hashes);
-    }
+    await translateNews(config, apiKey, hashes, applyNewsForce);
 
     saveJson(HASHES_PATH, hashes);
   }

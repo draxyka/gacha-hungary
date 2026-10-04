@@ -8,9 +8,9 @@ export default function Footer() {
   if (pathname === '/') return null;
 
   return (
-    <footer className="py-6 border-t border-white/10 bg-black/40" role="contentinfo">
+    <footer className="border-t border-white/5 py-5" role="contentinfo">
       <div className="wrapper text-center">
-        <p className="text-white/30 text-sm tracking-wider">
+        <p className="text-white/30 text-xs uppercase tracking-[0.2em]">
           &copy; {new Date().getFullYear()} Gacha Hungary. Minden jog fenntartva.
         </p>
       </div>

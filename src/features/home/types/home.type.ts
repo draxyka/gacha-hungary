@@ -2,6 +2,6 @@ export type HomeItem = {
   slug: string;
   title: string;
   description: string;
-  videoPoster: string;
-  videoUrl: string;
+  /** Háttérkép a public/assets/images/home mappából — ha nincs, üres (fekete) háttér */
+  image?: string;
 };

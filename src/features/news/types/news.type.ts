@@ -8,4 +8,6 @@ export type NewsItem = {
   createdAt: string;
   category: string;
   sourceUrl: string;
+  /** false = nincs magyar fordítás, az eredeti angol szöveg jelenik meg */
+  translated: boolean;
 };

@@ -13,61 +13,67 @@ export default async function NewsDetail({ slug, id }: { slug: string; id: strin
 
   return (
     <section className="flex-1">
-      {/* Hero image */}
       {article.image && (
-        <div className="relative w-full aspect-[21/7] max-h-[400px] overflow-hidden">
-          <Image
-            src={article.image}
-            alt={article.title}
-            fill
-            unoptimized
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/10" />
+        <div className="relative w-full aspect-[16/9] md:aspect-[21/7] max-h-[440px] overflow-hidden">
+          <Image src={article.image} alt={article.title} fill priority sizes="100vw" className="object-cover" />
+          <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-black/10" />
         </div>
       )}
 
-      <div className={`wrapper ${article.image ? '-mt-20 relative z-10' : 'pt-16'}`}>
+      <div className={`wrapper ${article.image ? '-mt-24 relative z-10' : 'pt-16'}`}>
         <article className="max-w-3xl mx-auto">
-          <h1 className="text-3xl md:text-5xl text-white font-bold text-center tracking-wide leading-tight">
-            {article.title}
-          </h1>
+          <Link
+            href={`/${slug}`}
+            className="group inline-flex items-center gap-2 mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-white/50 no-underline transition-colors hover:text-amber-300"
+          >
+            <span className="transition-transform duration-300 group-hover:-translate-x-1" aria-hidden="true">
+              ←
+            </span>
+            Vissza a hírekhez
+          </Link>
 
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <time className="text-sm uppercase tracking-[0.2em] text-gray-400">
+          <div className="flex flex-wrap items-center gap-3">
+            {article.category && (
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-300 bg-amber-400/10 ring-1 ring-inset ring-amber-400/30 px-2.5 py-1 rounded-full">
+                {article.category}
+              </span>
+            )}
+            <time className="text-xs uppercase tracking-[0.2em] text-white/50">
               {new Date(article.createdAt).toLocaleDateString('hu-HU', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
               })}
             </time>
-            {article.category && (
-              <span className="text-xs uppercase tracking-[0.15em] text-amber-400/80 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
-                {article.category}
-              </span>
-            )}
           </div>
 
-          <div className="mt-3 mb-12 flex justify-center">
-            <span className="block w-16 h-[2px] bg-white/20 rounded-full" />
-          </div>
+          <h1 className="mt-4 text-3xl md:text-5xl text-white font-bold tracking-wide leading-tight">{article.title}</h1>
 
-          <div
-            className="news-content"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+          <span className="block mt-8 mb-10 w-20 h-[2px] rounded-full bg-linear-to-r from-amber-400 to-amber-400/0" />
 
-          <div className="mt-12 pt-8 border-t border-white/10 text-center pb-16">
+          {!article.translated && (
+            <p className="mb-8 rounded-xl bg-amber-400/5 ring-1 ring-inset ring-amber-400/20 px-4 py-3 text-sm text-amber-200/80">
+              Ehhez a hírhez még nem készült magyar fordítás, ezért az eredeti angol szöveg látható.
+            </p>
+          )}
+
+          <div className="news-content" dangerouslySetInnerHTML={{ __html: article.content }} />
+
+          <div className="mt-14 pt-8 pb-20 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
             <Link
+              href={`/${slug}`}
+              className="text-sm text-white/50 no-underline transition-colors hover:text-amber-300"
+            >
+              ← Összes hír
+            </Link>
+            <a
               href={article.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-white/40 hover:text-white/70 transition-colors"
+              className="text-sm text-white/40 no-underline transition-colors hover:text-white/70"
             >
-              Eredeti forrás: {new URL(article.sourceUrl).hostname}
-            </Link>
+              Eredeti forrás: {new URL(article.sourceUrl).hostname} ↗
+            </a>
           </div>
         </article>
       </div>
